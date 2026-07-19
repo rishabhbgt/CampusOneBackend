@@ -214,7 +214,8 @@ const updateComplaintStatus = async (req, res) => {
 const editComplaint = async (req, res) => {
     try {
 
-        const { title, description, category } = req.body;
+
+        const { title, description, category, removeImage } = req.body;
 
         const updateData = {
             title,
@@ -222,8 +223,20 @@ const editComplaint = async (req, res) => {
             category,
         };
 
+        if (removeImage === "true") {
+            updateData.image = "";
+}
+
+
         if (req.file) {
+
             updateData.image = req.file.path;
+
+        }
+        else if (removeImage === "true") {
+
+            updateData.image = "";
+
         }
 
         const complaint = await Complaint.findByIdAndUpdate(

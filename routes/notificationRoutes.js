@@ -16,7 +16,7 @@ router.get(
 );
 
 router.put(
-    "/:id/read",
+    "/read",
     authMiddleware,
     markAsRead
 );
