@@ -1,12 +1,12 @@
 const Notification = require("../models/Notification");
 
+// Get Notifications
 const getNotifications = async (req, res) => {
     try {
 
-        const notifications =
-            await Notification.find({
-                user: req.user.id,
-            })
+        const notifications = await Notification.find({
+            user: req.user.id,
+        })
             .populate("complaint", "title")
             .sort({ createdAt: -1 });
 
@@ -23,7 +23,32 @@ const getNotifications = async (req, res) => {
     }
 };
 
-const markAsRead = async (req, res) => {
+// Mark Single Notification as Read
+const markNotificationRead = async (req, res) => {
+    try {
+
+        await Notification.findByIdAndUpdate(
+            req.params.id,
+            {
+                isRead: true,
+            }
+        );
+
+        res.status(200).json({
+            message: "Notification marked as read",
+        });
+
+    } catch (error) {
+
+        res.status(500).json({
+            message: error.message,
+        });
+
+    }
+};
+
+// Mark All Notifications as Read
+const markAllNotificationsRead = async (req, res) => {
     try {
 
         await Notification.updateMany(
@@ -32,9 +57,7 @@ const markAsRead = async (req, res) => {
                 isRead: false,
             },
             {
-                $set: {
-                    isRead: true,
-                },
+                isRead: true,
             }
         );
 
@@ -53,5 +76,6 @@ const markAsRead = async (req, res) => {
 
 module.exports = {
     getNotifications,
-    markAsRead,
+    markNotificationRead,
+    markAllNotificationsRead,
 };
