@@ -1,14 +1,19 @@
 const Notification = require("../models/Notification");
 
-// Get Notifications
+
+// Get all notifications
 const getNotifications = async (req, res) => {
+
     try {
 
-        const notifications = await Notification.find({
-            user: req.user.id,
-        })
+        const notifications =
+            await Notification.find({
+                user: req.user.id,
+            })
             .populate("complaint", "title")
-            .sort({ createdAt: -1 });
+            .sort({
+                createdAt: -1,
+            });
 
         res.status(200).json({
             notifications,
@@ -21,21 +26,28 @@ const getNotifications = async (req, res) => {
         });
 
     }
+
 };
 
-// Mark Single Notification as Read
+
+// Mark one notification as read
 const markNotificationRead = async (req, res) => {
+
     try {
 
-        await Notification.findByIdAndUpdate(
-            req.params.id,
+        await Notification.findOneAndUpdate(
+            {
+                _id: req.params.id,
+                user: req.user.id,
+            },
             {
                 isRead: true,
             }
         );
 
         res.status(200).json({
-            message: "Notification marked as read",
+            message:
+                "Notification marked as read",
         });
 
     } catch (error) {
@@ -45,10 +57,13 @@ const markNotificationRead = async (req, res) => {
         });
 
     }
+
 };
 
-// Mark All Notifications as Read
+
+// Mark all notifications as read
 const markAllNotificationsRead = async (req, res) => {
+
     try {
 
         await Notification.updateMany(
@@ -57,12 +72,15 @@ const markAllNotificationsRead = async (req, res) => {
                 isRead: false,
             },
             {
-                isRead: true,
+                $set: {
+                    isRead: true,
+                },
             }
         );
 
         res.status(200).json({
-            message: "All notifications marked as read",
+            message:
+                "All notifications marked as read",
         });
 
     } catch (error) {
@@ -72,7 +90,9 @@ const markAllNotificationsRead = async (req, res) => {
         });
 
     }
+
 };
+
 
 module.exports = {
     getNotifications,

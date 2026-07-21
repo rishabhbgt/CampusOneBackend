@@ -10,25 +10,30 @@ const {
     markAllNotificationsRead,
 } = require("../controllers/notificationController");
 
-// Get Notifications
+
+// Get all notifications
 router.get(
     "/",
     authMiddleware,
     getNotifications
 );
 
-// Mark One Notification Read
+
+// Mark all notifications as read
+// IMPORTANT: This route must come BEFORE /:id/read
+router.put(
+    "/read-all",
+    authMiddleware,
+    markAllNotificationsRead
+);
+
+
+// Mark one notification as read
 router.put(
     "/:id/read",
     authMiddleware,
     markNotificationRead
 );
 
-// Mark All Notifications Read
-router.put(
-    "/read-all",
-    authMiddleware,
-    markAllNotificationsRead
-);
 
 module.exports = router;
