@@ -10,6 +10,7 @@ const commentRoutes = require("./routes/commentRoutes");
 const notificationRoutes = require("./routes/notificationRoutes");
 const userRoutes = require("./routes/userRoutes");
 const reportRoutes = require("./routes/reportRoutes");
+const facultyRoutes = require("./routes/facultyRoutes");
 
 const express = require("express");
 const cors = require("cors");
@@ -88,6 +89,10 @@ app.use("/api/complaints", commentRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/reports", reportRoutes);
+app.use(
+    "/api/faculty",
+    facultyRoutes
+);
 
 app.use((err, req, res, next) => {
     console.log("========= MULTER ERROR =========");

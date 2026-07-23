@@ -26,6 +26,7 @@ router.get(
     getAllComplaints
 );
 
+
 router.get("/:id", authMiddleware, getComplaintById);
 
 router.put(
