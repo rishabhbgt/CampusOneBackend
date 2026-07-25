@@ -2,12 +2,21 @@ const express = require("express");
 const router = express.Router();
 
 const upload = require("../middleware/upload");
-const authMiddleware = require("../middleware/authMiddleware");
-const adminMiddleware = require("../middleware/adminMiddleware");
+
+const authMiddleware =
+    require("../middleware/authMiddleware");
+
+const adminMiddleware =
+    require("../middleware/adminMiddleware");
+
+const adminOrFacultyMiddleware =
+    require("../middleware/adminOrFacultyMiddleware");
+
 
 const {
     createComplaint,
     getMyComplaints,
+    getAssignedComplaints,
     getComplaintById,
     updateComplaintStatus,
     getAllComplaints,
@@ -15,9 +24,25 @@ const {
     deleteComplaint,
 } = require("../controllers/complaintController");
 
-router.post("/", authMiddleware, upload.single("image"), createComplaint);
 
-router.get("/my", authMiddleware, getMyComplaints);
+router.post(
+    "/",
+    authMiddleware,
+    upload.single("image"),
+    createComplaint
+);
+
+router.get(
+    "/my",
+    authMiddleware,
+    getMyComplaints
+);
+
+router.get(
+    "/assigned",
+    authMiddleware,
+    getAssignedComplaints
+);
 
 router.get(
     "/all",
@@ -26,18 +51,31 @@ router.get(
     getAllComplaints
 );
 
-
-router.get("/:id", authMiddleware, getComplaintById);
+router.get(
+    "/:id",
+    authMiddleware,
+    getComplaintById
+);
 
 router.put(
     "/:id",
     authMiddleware,
-    adminMiddleware,
+    adminOrFacultyMiddleware,
     updateComplaintStatus
 );
 
-router.put("/edit/:id", authMiddleware, upload.single("image"), editComplaint);
+router.put(
+    "/edit/:id",
+    authMiddleware,
+    upload.single("image"),
+    editComplaint
+);
 
-router.delete("/:id", authMiddleware, deleteComplaint);
+router.delete(
+    "/:id",
+    authMiddleware,
+    deleteComplaint
+);
+
 
 module.exports = router;
