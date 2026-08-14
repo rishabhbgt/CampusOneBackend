@@ -5,12 +5,20 @@ const authMiddleware = require("../middleware/authMiddleware");
 const adminMiddleware = require("../middleware/adminMiddleware");
 
 const {
+    createUser,
     getAllUsers,
     blockUser,
     unblockUser,
     deleteUser,
     changeRole,
 } = require("../controllers/userController");
+
+router.post(
+    "/create",
+    authMiddleware,
+    adminMiddleware,
+    createUser
+);
 
 router.get("/", authMiddleware, adminMiddleware, getAllUsers);
 

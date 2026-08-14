@@ -1,21 +1,28 @@
 const mongoose = require("mongoose");
 
-    const complaintSchema = new mongoose.Schema(
+const complaintSchema = new mongoose.Schema(
     {
         title: {
-        type: String,
-        required: true,
+            type: String,
+            required: true,
         },
 
         description: {
-        type: String,
-        required: true,
+            type: String,
+            required: true,
         },
 
         category: {
-        type: String,
-        enum: ["Hostel", "Library","Mess","Canteen", "Classroom", "Other"],
-        required: true,
+            type: String,
+            enum: [
+                "Hostel",
+                "Library",
+                "Mess",
+                "Canteen",
+                "Classroom",
+                "Other",
+            ],
+            required: true,
         },
 
         image: {
@@ -24,15 +31,22 @@ const mongoose = require("mongoose");
         },
 
         status: {
-        type: String,
-        enum: ["Pending", "In Progress", "Resolved"],
-        default: "Pending",
+            type: String,
+            enum: [
+                "Pending",
+                "In Progress",
+                "Resolved",
+            ],
+            default: "Pending",
         },
-
 
         priority: {
             type: String,
-            enum: ["Low", "Medium", "High"],
+            enum: [
+                "Low",
+                "Medium",
+                "High",
+            ],
             default: "Medium",
         },
 
@@ -46,15 +60,70 @@ const mongoose = require("mongoose");
             default: null,
         },
 
-            comments: [
+        comments: [
             {
                 user: {
                     type: mongoose.Schema.Types.ObjectId,
                     ref: "User",
                 },
+
                 name: String,
+
                 role: String,
+
                 message: String,
+
+                createdAt: {
+                    type: Date,
+                    default: Date.now,
+                },
+            },
+        ],
+
+        history: [
+            {
+                action: {
+                    type: String,
+                    enum: [
+                        "SUBMITTED",
+                        "ASSIGNED",
+                        "REASSIGNED",
+                        "STATUS_UPDATED",
+                        "PRIORITY_UPDATED",
+                        "DUE_DATE_UPDATED",
+                        "UNASSIGNED",
+                    ],
+                    required: true,
+                },
+
+                status: {
+                    type: String,
+                    enum: [
+                        "Pending",
+                        "In Progress",
+                        "Resolved",
+                    ],
+                },
+
+                changedBy: {
+                    type: mongoose.Schema.Types.ObjectId,
+                    ref: "User",
+                },
+
+                changedByRole: {
+                    type: String,
+                    enum: [
+                        "student",
+                        "faculty",
+                        "admin",
+                    ],
+                },
+
+                message: {
+                    type: String,
+                    required: true,
+                },
+
                 createdAt: {
                     type: Date,
                     default: Date.now,
@@ -63,8 +132,8 @@ const mongoose = require("mongoose");
         ],
 
         createdBy: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User",
         },
     },
     {
@@ -72,4 +141,8 @@ const mongoose = require("mongoose");
     }
 );
 
-module.exports = mongoose.model("Complaint", complaintSchema);
+module.exports =
+    mongoose.model(
+        "Complaint",
+        complaintSchema
+    );

@@ -1,4 +1,88 @@
 const User = require("../models/User");
+const bcrypt = require("bcryptjs");
+
+const createUser = async (req, res) => {
+    try {
+
+        const {
+            fullName,
+            email,
+            password,
+            role,
+        } = req.body;
+
+        if (
+            !fullName ||
+            !email ||
+            !password ||
+            !role
+        ) {
+            return res.status(400).json({
+                message: "All fields are required",
+            });
+        }
+
+        if (
+            !["admin", "faculty"].includes(role)
+        ) {
+            return res.status(400).json({
+                message:
+                    "Only Admin or Faculty accounts can be created here",
+            });
+        }
+
+        const existingUser =
+            await User.findOne({ email });
+
+
+        if (existingUser) {
+            return res.status(400).json({
+                message:
+                    "User already exists",
+            });
+        }
+
+        const hashedPassword =
+            await bcrypt.hash(
+                password,
+                10
+            );
+
+        const user =
+            await User.create({
+                fullName,
+                email,
+                password: hashedPassword,
+                role,
+            });
+
+
+        res.status(201).json({
+            message:
+                `${role === "faculty" ? "Faculty" : "Admin"} account created successfully`,
+            user: {
+                id: user._id,
+                fullName: user.fullName,
+                email: user.email,
+                role: user.role,
+                isBlocked: user.isBlocked,
+            },
+        });
+
+
+    } catch (error) {
+
+        console.error(
+            "Create User Error:",
+            error
+        );
+
+        res.status(500).json({
+            message: error.message,
+        });
+
+    }
+};
 
 const getAllUsers = async (req, res) => {
     try {
@@ -157,6 +241,7 @@ const changeRole = async (req, res) => {
 };
 
 module.exports = {
+    createUser,
     getAllUsers,
     blockUser,
     unblockUser,
