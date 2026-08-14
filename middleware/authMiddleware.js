@@ -1,32 +1,65 @@
 const jwt = require("jsonwebtoken");
 
 const authMiddleware = (req, res, next) => {
+
     try {
-    // Token lena
-    const token = req.header("Authorization");
 
-    console.log("Received Token:", token);
+        const authHeader =
+            req.header("Authorization");
 
-    if (!token) {
-        return res.status(401).json({
-        message: "Access Denied. No Token Provided.",
-        });
-    }
+        if (!authHeader) {
 
-    // Token verify karna
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+            return res.status(401).json({
+                message:
+                    "Access Denied. No Token Provided.",
+            });
 
-    // User ki info request me store karna
-    req.user = decoded;
+        }
 
-    // Next middleware/controller
-    next();
+        const token =
+            authHeader.startsWith("Bearer ")
+                ? authHeader.split(" ")[1]
+                : authHeader;
+
+
+        if (!token) {
+
+            return res.status(401).json({
+                message:
+                    "Access Denied. Invalid Token.",
+            });
+
+        }
+
+        const decoded =
+            jwt.verify(
+                token,
+                process.env.JWT_SECRET
+            );
+
+
+        req.user = {
+            id: decoded.id,
+            role: decoded.role,
+        };
+
+        next();
+
     } catch (error) {
-        console.log(error.message);
-    return res.status(401).json({
-        message: "Invalid Token",
+
+        console.error(
+            "Auth Middleware Error:",
+            error.message
+        );
+
+
+        return res.status(401).json({
+            message:
+                "Invalid or expired token",
         });
+
     }
+
 };
 
 module.exports = authMiddleware;
