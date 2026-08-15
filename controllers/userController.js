@@ -7,6 +7,7 @@ const createUser = async (req, res) => {
         const {
             fullName,
             email,
+            phone,
             password,
             role,
         } = req.body;
@@ -14,11 +15,18 @@ const createUser = async (req, res) => {
         if (
             !fullName ||
             !email ||
+            !phone ||
             !password ||
             !role
         ) {
             return res.status(400).json({
                 message: "All fields are required",
+            });
+        }
+
+        if (!/^[0-9]{10}$/.test(phone)) {
+            return res.status(400).json({
+                message: "Enter a valid 10-digit mobile number",
             });
         }
 
@@ -42,6 +50,15 @@ const createUser = async (req, res) => {
             });
         }
 
+        const existingPhone =
+            await User.findOne({ phone });
+
+        if (existingPhone) {
+            return res.status(400).json({
+                message: "Mobile number already registered",
+            });
+        }
+
         const hashedPassword =
             await bcrypt.hash(
                 password,
@@ -52,6 +69,8 @@ const createUser = async (req, res) => {
             await User.create({
                 fullName,
                 email,
+                phone, 
+                phoneVerified: false,
                 password: hashedPassword,
                 role,
             });
