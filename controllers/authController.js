@@ -4,11 +4,6 @@ const bcrypt = require("bcryptjs");
 const crypto = require("crypto");
 const sendEmail = require("../utils/sendEmail");
 
-const {
-    sendVerificationCode,
-    checkVerificationCode,
-} = require("../utils/twilio");
-
 
 const signup = async (req, res) => {
 
@@ -112,8 +107,20 @@ const signup = async (req, res) => {
 
         try {
 
-            await sendVerificationCode(
-                `+91${phone}`
+            const otpCode =
+                Math.floor(
+                    100000 + Math.random() * 900000
+                ).toString();
+
+            user.otpCode = otpCode;
+
+            user.otpExpires =
+                Date.now() + 5 * 60 * 1000;
+
+            await user.save();
+
+            console.log(
+                `OTP for ${phone}: ${otpCode}`
             );
 
         } catch (otpError) {
@@ -192,121 +199,86 @@ const verifyPhone = async (req, res) => {
             code,
         } = req.body;
 
-
-        if (
-            !phone ||
-            !code
-        ) {
-
+        if (!phone || !code) {
             return res.status(400).json({
                 message:
                     "Phone number and OTP are required",
             });
-
         }
 
-
-        if (
-            !/^[0-9]{10}$/.test(phone)
-        ) {
-
+        if (!/^[0-9]{10}$/.test(phone)) {
             return res.status(400).json({
                 message:
                     "Enter a valid 10-digit mobile number",
             });
-
         }
 
-
-        if (
-            !/^[0-9]{6}$/.test(code)
-        ) {
-
+        if (!/^[0-9]{6}$/.test(code)) {
             return res.status(400).json({
                 message:
                     "Enter a valid 6-digit OTP",
             });
-
         }
-
 
         const user =
             await User.findOne({
                 phone,
             });
 
-
         if (!user) {
-
             return res.status(404).json({
                 message:
                     "User not found",
             });
-
         }
 
-
-        if (
-            user.phoneVerified
-        ) {
-
+        if (user.phoneVerified) {
             return res.status(400).json({
                 message:
                     "Mobile number is already verified",
             });
-
         }
 
-
-        let result;
-
-        try {
-
-            result =
-                await checkVerificationCode(
-                    `+91${phone}`,
-                    code
-                );
-
-        } catch (verificationError) {
-
-            console.error(
-                "Twilio Verification Error:",
-                verificationError
-            );
-
+        if (!user.otpCode || !user.otpExpires) {
             return res.status(400).json({
                 message:
-                    "Invalid or expired OTP",
+                    "OTP not found. Please signup again.",
             });
-
         }
-
 
         if (
-            result.status !== "approved"
+            Date.now() > user.otpExpires.getTime()
         ) {
+
+            user.otpCode = null;
+            user.otpExpires = null;
+
+            await user.save();
 
             return res.status(400).json({
                 message:
-                    "Invalid or expired OTP",
+                    "OTP has expired. Please signup again.",
             });
-
         }
 
+        if (user.otpCode !== code) {
+            return res.status(400).json({
+                message:
+                    "Invalid OTP",
+            });
+        }
 
-        user.phoneVerified =
-            true;
+        user.phoneVerified = true;
 
+        user.otpCode = null;
+        user.otpExpires = null;
 
         await user.save();
-
 
         return res.status(200).json({
             message:
                 "Mobile number verified successfully",
         });
-
 
     } catch (error) {
 
@@ -314,7 +286,6 @@ const verifyPhone = async (req, res) => {
             "Phone Verification Error:",
             error
         );
-
 
         return res.status(500).json({
             message:
@@ -619,7 +590,271 @@ const forgotPassword = async (req, res) => {
     }
 
 };
+const forgotPasswordByPhone = async (req, res) => {
 
+    try {
+
+        const { phone } = req.body;
+
+        if (!phone) {
+            return res.status(400).json({
+                message: "Mobile number is required",
+            });
+        }
+
+        if (!/^[0-9]{10}$/.test(phone)) {
+            return res.status(400).json({
+                message: "Enter a valid 10-digit mobile number",
+            });
+        }
+
+        const user = await User.findOne({
+            phone,
+        });
+
+        if (!user) {
+            return res.status(200).json({
+                message:
+                    "If this mobile number is registered, an OTP has been generated.",
+            });
+        }
+
+        const otp =
+            Math.floor(
+                100000 + Math.random() * 900000
+            ).toString();
+
+        user.passwordResetOtp = otp;
+
+        user.passwordResetOtpExpires =
+            Date.now() + 5 * 60 * 1000;
+
+        await user.save();
+
+        console.log(
+            `Password Reset OTP for ${phone}: ${otp}`
+        );
+
+        return res.status(200).json({
+            message:
+                "If this mobile number is registered, an OTP has been generated.",
+        });
+
+    } catch (error) {
+
+        console.error(
+            "Forgot Password Phone Error:",
+            error
+        );
+
+        return res.status(500).json({
+            message:
+                "Unable to process request",
+        });
+
+    }
+
+};
+
+const verifyPasswordResetOtp = async (req, res) => {
+
+    try {
+
+        const {
+            phone,
+            code,
+        } = req.body;
+
+        if (!phone || !code) {
+            return res.status(400).json({
+                message: "Mobile number and OTP are required",
+            });
+        }
+
+        if (!/^[0-9]{10}$/.test(phone)) {
+            return res.status(400).json({
+                message: "Enter a valid 10-digit mobile number",
+            });
+        }
+
+        if (!/^[0-9]{6}$/.test(code)) {
+            return res.status(400).json({
+                message: "Enter a valid 6-digit OTP",
+            });
+        }
+
+        const user = await User.findOne({
+            phone,
+        });
+
+        if (!user) {
+            return res.status(400).json({
+                message: "Invalid OTP",
+            });
+        }
+
+        if (
+            !user.passwordResetOtp ||
+            !user.passwordResetOtpExpires
+        ) {
+            return res.status(400).json({
+                message: "OTP not found. Please request a new OTP.",
+            });
+        }
+
+        if (
+            Date.now() >
+            user.passwordResetOtpExpires.getTime()
+        ) {
+
+            user.passwordResetOtp = null;
+            user.passwordResetOtpExpires = null;
+
+            await user.save();
+
+            return res.status(400).json({
+                message: "OTP has expired. Please request a new OTP.",
+            });
+        }
+
+        if (user.passwordResetOtp !== code) {
+            return res.status(400).json({
+                message: "Invalid OTP",
+            });
+        }
+
+        return res.status(200).json({
+            message: "OTP verified successfully",
+        });
+
+    } catch (error) {
+
+        console.error(
+            "Verify Password Reset OTP Error:",
+            error
+        );
+
+        return res.status(500).json({
+            message: "Failed to verify OTP",
+        });
+
+    }
+
+};
+
+const resetPasswordByPhone = async (req, res) => {
+
+    try {
+
+        const {
+            phone,
+            code,
+            password,
+        } = req.body;
+
+        if (!phone || !code || !password) {
+            return res.status(400).json({
+                message:
+                    "Mobile number, OTP and password are required",
+            });
+        }
+
+        if (!/^[0-9]{10}$/.test(phone)) {
+            return res.status(400).json({
+                message:
+                    "Enter a valid 10-digit mobile number",
+            });
+        }
+
+        if (!/^[0-9]{6}$/.test(code)) {
+            return res.status(400).json({
+                message:
+                    "Enter a valid 6-digit OTP",
+            });
+        }
+
+        if (password.length < 6) {
+            return res.status(400).json({
+                message:
+                    "Password must be at least 6 characters",
+            });
+        }
+
+        const user = await User.findOne({
+            phone,
+        });
+
+        if (!user) {
+            return res.status(400).json({
+                message:
+                    "Invalid OTP",
+            });
+        }
+
+        if (
+            !user.passwordResetOtp ||
+            !user.passwordResetOtpExpires
+        ) {
+            return res.status(400).json({
+                message:
+                    "OTP not found. Please request a new OTP.",
+            });
+        }
+
+        if (
+            Date.now() >
+            user.passwordResetOtpExpires.getTime()
+        ) {
+
+            user.passwordResetOtp = null;
+            user.passwordResetOtpExpires = null;
+
+            await user.save();
+
+            return res.status(400).json({
+                message:
+                    "OTP has expired. Please request a new OTP.",
+            });
+        }
+
+        if (user.passwordResetOtp !== code) {
+            return res.status(400).json({
+                message:
+                    "Invalid OTP",
+            });
+        }
+
+        user.password =
+            await bcrypt.hash(
+                password,
+                10
+            );
+
+        user.passwordResetOtp = null;
+        user.passwordResetOtpExpires = null;
+
+        await user.save();
+
+        return res.status(200).json({
+            message:
+                "Password reset successful",
+        });
+
+    } catch (error) {
+
+        console.error(
+            "Reset Password By Phone Error:",
+            error
+        );
+
+        return res.status(500).json({
+            message:
+                "Failed to reset password",
+        });
+
+    }
+
+};
 
 module.exports = {
     signup,
@@ -627,4 +862,7 @@ module.exports = {
     verifyPhone,
     forgotPassword,
     resetPassword,
+    forgotPasswordByPhone,
+    verifyPasswordResetOtp,
+    resetPasswordByPhone,
 };
