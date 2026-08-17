@@ -23,44 +23,14 @@ const userSchema = new mongoose.Schema(
             trim: true,
         },
 
-        phoneVerified: {
-            type: Boolean,
-            default: false,
-        },
-
-        otpCode: {
-            type: String,
-            default: null,
-        },
-
-        otpExpires: {
-            type: Date,
-            default: null,
-        },
-
-        passwordResetOtp: {
-            type: String,
-            default: null,
-        },
-
-        passwordResetOtpExpires: {
-            type: Date,
-            default: null,
-        },
-
         password: {
             type: String,
             required: true,
-            minlength: 6,
         },
 
         role: {
             type: String,
-            enum: [
-                "student",
-                "faculty",
-                "admin",
-            ],
+            enum: ["student", "faculty", "admin"],
             default: "student",
         },
 
@@ -78,29 +48,10 @@ const userSchema = new mongoose.Schema(
             type: Date,
             default: null,
         },
-
-        passwordResetOtpHash: {
-            type: String,
-            default: null,
-        },
-
-        passwordResetOtpExpires: {
-            type: Date,
-            default: null,
-        },
-
-        passwordResetOtpAttempts: {
-            type: Number,
-            default: 0,
-        },
     },
     {
         timestamps: true,
     }
 );
 
-module.exports =
-    mongoose.model(
-        "User",
-        userSchema
-    );
+module.exports = mongoose.model("User", userSchema);
