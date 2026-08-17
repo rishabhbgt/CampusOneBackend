@@ -1,12 +1,21 @@
-const transporter = require("../config/mail");
+const { Resend } = require("resend");
+
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 const sendEmail = async (to, subject, html) => {
-    await transporter.sendMail({
-        from: `"CampusOne Administration" <${process.env.SMTP_EMAIL}>`,
-        to,
-        subject,
-        html,
-    });
+    try {
+        await resend.emails.send({
+            from: "CampusOne <onboarding@resend.dev>",
+            to,
+            subject,
+            html,
+        });
+
+        return true;
+    } catch (error) {
+        console.error("Email Send Error:", error);
+        throw error;
+    }
 };
 
 module.exports = sendEmail;
