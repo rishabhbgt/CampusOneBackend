@@ -3,6 +3,7 @@ const User = require("../models/User");
 const bcrypt = require("bcryptjs");
 const crypto = require("crypto");
 const sendEmail = require("../utils/sendEmail");
+const validatePassword = require("../utils/passwordValidator");
 
 const signup = async (req, res) => {
     try {
@@ -19,11 +20,20 @@ const signup = async (req, res) => {
             });
         }
 
+        const passwordErrors = validatePassword(password);
+
+        if (passwordErrors.length > 0) {
+            return res.status(400).json({
+                message: passwordErrors.join(". "),
+            });
+        }
+        
         if (!/^[0-9]{10}$/.test(phone)) {
             return res.status(400).json({
                 message: "Enter a valid 10-digit mobile number",
             });
         }
+
 
         const existingEmail = await User.findOne({
             email: email.toLowerCase(),
@@ -161,10 +171,11 @@ const resetPassword = async (req, res) => {
             });
         }
 
-        if (password.length < 6) {
+        const passwordErrors = validatePassword(password);
+
+        if (passwordErrors.length > 0) {
             return res.status(400).json({
-                message:
-                    "Password must be at least 6 characters",
+                message: passwordErrors.join(". "),
             });
         }
 
