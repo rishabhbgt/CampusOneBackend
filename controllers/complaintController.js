@@ -163,16 +163,12 @@ const getMyComplaints = async (req, res) => {
 
     try {
 
-        const complaints =
-            await Complaint.find({
-
-                createdBy:
-                    req.user.id,
-
-            })
-            .sort({
-                createdAt: -1,
-            });
+        const complaints = await Complaint.find({
+            createdBy: req.user.id,
+            isArchived: { $ne: true },
+        }).sort({
+            createdAt: -1,
+        });
 
 
         res.status(200).json({
@@ -205,24 +201,21 @@ const getAssignedComplaints = async (req, res) => {
 
     try {
 
-        const complaints =
-            await Complaint.find({
-
-                assignedTo:
-                    req.user.id,
-
+        const complaints = await Complaint.find({
+                assignedTo: req.user.id,
+                isArchived: { $ne: true },
             })
-            .populate(
-                "createdBy",
-                "fullName email"
-            )
-            .populate(
-                "assignedTo",
-                "fullName email"
-            )
-            .sort({
-                createdAt: -1,
-            });
+                .populate(
+                    "createdBy",
+                    "fullName email"
+                )
+                .populate(
+                    "assignedTo",
+                    "fullName email"
+                )
+                .sort({
+                    createdAt: -1,
+                });
 
 
         res.status(200).json({
@@ -343,24 +336,21 @@ const getAllComplaints = async (req, res) => {
 
     try {
 
-        const complaints =
-            await Complaint.find()
-
+        const complaints = await Complaint.find({
+            isArchived: { $ne: true },
+        })
             .populate(
                 "createdBy",
                 "fullName email"
             )
-
             .populate(
                 "assignedTo",
                 "fullName email"
             )
-
             .populate(
                 "history.changedBy",
                 "fullName email role"
             )
-
             .sort({
                 createdAt: -1,
             });
@@ -1191,6 +1181,61 @@ const deleteComplaint = async (
 
 };
 
+const archiveComplaint = async (req, res) => {
+    try {
+        const complaint = await Complaint.findById(
+            req.params.id
+        );
+
+        if (!complaint) {
+            return res.status(404).json({
+                message: "Complaint not found",
+            });
+        }
+
+        if (req.user.role !== "admin") {
+            return res.status(403).json({
+                message:
+                    "Only admin can archive complaints",
+            });
+        }
+
+        if (complaint.status !== "Resolved") {
+            return res.status(400).json({
+                message:
+                    "Only resolved complaints can be archived",
+            });
+        }
+
+        if (complaint.isArchived) {
+            return res.status(400).json({
+                message:
+                    "Complaint is already archived",
+            });
+        }
+
+        complaint.isArchived = true;
+        complaint.archivedAt = new Date();
+        complaint.archivedBy = req.user.id;
+
+        await complaint.save();
+
+        res.status(200).json({
+            message:
+                "Complaint archived successfully",
+        });
+    } catch (error) {
+        console.error(
+            "Archive Complaint Error:",
+            error
+        );
+
+        res.status(500).json({
+            message: error.message,
+        });
+    }
+};
+
 module.exports = {
 
     createComplaint,
@@ -1208,5 +1253,7 @@ module.exports = {
     updateComplaintStatus,
 
     deleteComplaint,
+
+    archiveComplaint,
 
 };

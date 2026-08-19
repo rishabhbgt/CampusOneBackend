@@ -33,6 +33,7 @@ const {
     getAllComplaints,
     editComplaint,
     deleteComplaint,
+    archiveComplaint,
 } = require("../controllers/complaintController");
 
 router.post(
@@ -62,6 +63,13 @@ router.get(
     authMiddleware,
     adminMiddleware,
     getAllComplaints
+);
+
+router.put(
+    "/archive/:id",
+    authMiddleware,
+    adminMiddleware,
+    archiveComplaint
 );
 
 router.get(
