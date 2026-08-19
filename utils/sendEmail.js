@@ -1,19 +1,33 @@
 const { Resend } = require("resend");
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const resend = new Resend(
+    process.env.RESEND_API_KEY
+);
 
 const sendEmail = async (to, subject, html) => {
     try {
-        await resend.emails.send({
-            from: "CampusOne <onboarding@resend.dev>",
-            to,
-            subject,
-            html,
-        });
+        const { data, error } =
+            await resend.emails.send({
+                from: "CampusOne <onboarding@resend.dev>",
+                to,
+                subject,
+                html,
+            });
 
-        return true;
+        if (error) {
+            throw new Error(
+                error.message ||
+                "Email could not be sent"
+            );
+        }
+
+        return data;
     } catch (error) {
-        console.error("Email Send Error:", error);
+        console.error(
+            "Email Send Error:",
+            error
+        );
+
         throw error;
     }
 };
