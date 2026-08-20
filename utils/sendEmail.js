@@ -17,7 +17,7 @@ const gmail = google.gmail({
 const sendEmail = async (to, subject, html) => {
     try {
         const message = [
-            `From: CampusOne Administration <${process.env.SMTP_EMAIL}>`,
+            `From: CampusOne Administration <${process.env.GMAIL_SENDER_EMAIL}>`,
             `To: ${to}`,
             `Subject: ${subject}`,
             "MIME-Version: 1.0",
